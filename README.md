@@ -11,6 +11,12 @@ A lightweight Windows application that allows you to launch single or multiple a
 ✨ **Global Keyboard Shortcuts** - Launch applications from anywhere with customizable hotkeys  
 🚀 **Multiple Apps Per Shortcut** - Launch several applications at once with a single keypress  
 🎯 **Custom Naming** - Name your shortcuts like "Development Apps", "Games", etc.  
+🎨 **Application Icons** - Visual identification with app icons in the shortcut list  
+⚙️ **Command-Line Arguments** - Pass custom arguments to each application  
+🛡️ **Run as Administrator** - Launch apps with elevated privileges when needed  
+⏱️ **Launch Delay** - Configure delay between launching multiple apps  
+🔍 **Hotkey Conflict Detection** - Warns when hotkeys conflict with existing shortcuts  
+📤 **Import/Export** - Share or backup your shortcuts configuration  
 💾 **Persistent Settings** - Your shortcuts are automatically saved and loaded  
 🔔 **System Tray Integration** - Runs quietly in the background  
 ⚡ **Lightweight** - Minimal resource usage  
@@ -55,8 +61,12 @@ dotnet run -c Release
 1. Click **"Add Shortcut"** in the main window
 2. Enter a **name** for your shortcut (e.g., "Development Apps", "Games")
 3. Click **"Add App..."** to select one or more `.exe` files
-4. Click in the **Shortcut** field and press your desired key combination (e.g., `Ctrl+Alt+D`)
-5. Click **OK** to save
+4. For each app, configure:
+   - **Arguments**: Optional command-line parameters (e.g., `--fullscreen`)
+   - **Run as Administrator**: Check if the app needs elevated privileges
+5. Set **Launch Delay** (optional): Milliseconds to wait between launching each app
+6. Click in the **Shortcut** field and press your desired key combination (e.g., `Ctrl+Alt+D`)
+7. Click **OK** to save
 
 ### Example Use Cases
 
@@ -78,8 +88,11 @@ dotnet run -c Release
 ### Managing Shortcuts
 
 - **Edit**: Select a shortcut and click "Edit" or double-click it
+  - Click "Edit..." button next to an app to modify its arguments or admin settings
 - **Remove**: Select a shortcut and click "Remove"
 - **Launch**: Press the assigned hotkey from anywhere in Windows
+- **Import**: Load shortcuts from a JSON file
+- **Export**: Save your shortcuts to share or backup
 
 ### Settings
 
@@ -100,6 +113,53 @@ You must use **at least one modifier key** combined with a regular key (e.g., `C
 - `Ctrl+Shift+G` - Launch games
 - `Alt+Shift+W` - Launch work applications
 - `Ctrl+Alt+1` - Quick launch set 1
+
+## Advanced Features
+
+### Command-Line Arguments
+
+Launch applications with specific parameters:
+- Chrome with a specific profile: `--profile-directory="Profile 1"`
+- Games in fullscreen: `--fullscreen` or `-windowed`
+- Custom config files: `/config=myconfig.ini`
+
+### Run as Administrator
+
+Some applications require elevated privileges. Enable "Run as Administrator" for:
+- System utilities
+- Applications that modify system settings
+- Development tools requiring elevated access
+
+**Note**: You'll see a UAC prompt each time these apps are launched.
+
+### Launch Delay
+
+When launching multiple apps, add a delay to prevent:
+- System resource overload
+- Apps competing for initialization
+- Database connection conflicts
+
+Recommended delays:
+- Light apps (browsers, editors): 100-500ms
+- Heavy apps (IDEs, databases): 1000-2000ms
+
+### Import/Export Shortcuts
+
+**Export**: Save your shortcuts configuration to share with team members or backup
+1. Click "Export..."
+2. Choose location and filename
+3. Share the JSON file
+
+**Import**: Load shortcuts from a file
+1. Click "Import..."
+2. Select the JSON file
+3. Confirm to replace current shortcuts
+
+### Hotkey Conflict Detection
+
+QuickLauncher automatically detects when you try to use a hotkey that's already assigned to another shortcut. You'll be warned and can choose to:
+- Use a different hotkey
+- Override the existing shortcut (the old one will stop working)
 
 ## Configuration
 
@@ -165,12 +225,17 @@ If you encounter any issues or have questions:
 
 ## Roadmap
 
-- [ ] Add application icons to the shortcut list
-- [ ] Support for launching apps with command-line arguments
-- [ ] Import/Export shortcuts configuration
-- [ ] Hotkey conflict detection
-- [ ] Delay between launching multiple apps
-- [ ] Run applications as administrator option
+- [x] Add application icons to the shortcut list
+- [x] Support for launching apps with command-line arguments
+- [x] Import/Export shortcuts configuration
+- [x] Hotkey conflict detection
+- [x] Delay between launching multiple apps
+- [x] Run applications as administrator option
+- [ ] Dark mode theme
+- [ ] Profiles for different work contexts
+- [ ] Application window positioning
+- [ ] Startup delay for individual apps
+- [ ] Hotkey recording/playback
 
 ---
 
