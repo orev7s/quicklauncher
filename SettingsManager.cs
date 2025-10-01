@@ -56,5 +56,17 @@ namespace QuickLauncher
                 System.Windows.Forms.MessageBox.Show($"Error saving settings: {ex.Message}");
             }
         }
+
+        public static Settings LoadSettingsFromFile(string filePath)
+        {
+            string json = File.ReadAllText(filePath);
+            return JsonConvert.DeserializeObject<Settings>(json) ?? new Settings();
+        }
+
+        public static void ExportSettings(Settings settings, string filePath)
+        {
+            string json = JsonConvert.SerializeObject(settings, Formatting.Indented);
+            File.WriteAllText(filePath, json);
+        }
     }
 }

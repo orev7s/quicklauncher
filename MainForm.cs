@@ -16,9 +16,12 @@ namespace QuickLauncher
 
         // UI Controls
         private ListView _shortcutsListView;
+        private ImageList _iconImageList;
         private Button _addButton;
         private Button _editButton;
         private Button _removeButton;
+        private Button _importButton;
+        private Button _exportButton;
         private CheckBox _startWithWindowsCheckBox;
         private NotifyIcon _trayIcon;
         private ContextMenuStrip _trayMenu;
@@ -45,6 +48,13 @@ namespace QuickLauncher
             this.MinimumSize = new Size(600, 400);
             this.FormClosing += MainForm_FormClosing;
 
+            // ImageList for icons
+            _iconImageList = new ImageList
+            {
+                ImageSize = new Size(16, 16),
+                ColorDepth = ColorDepth.Depth32Bit
+            };
+
             // ListView for shortcuts
             _shortcutsListView = new ListView
             {
@@ -53,6 +63,7 @@ namespace QuickLauncher
                 View = View.Details,
                 FullRowSelect = true,
                 GridLines = true,
+                SmallImageList = _iconImageList,
                 Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right
             };
             _shortcutsListView.Columns.Add("Name", 150);
@@ -91,6 +102,26 @@ namespace QuickLauncher
             };
             _removeButton.Click += RemoveButton_Click;
             this.Controls.Add(_removeButton);
+
+            _importButton = new Button
+            {
+                Text = "Import...",
+                Location = new Point(350, 370),
+                Size = new Size(100, 30),
+                Anchor = AnchorStyles.Bottom | AnchorStyles.Left
+            };
+            _importButton.Click += ImportButton_Click;
+            this.Controls.Add(_importButton);
+
+            _exportButton = new Button
+            {
+                Text = "Export...",
+                Location = new Point(460, 370),
+                Size = new Size(100, 30),
+                Anchor = AnchorStyles.Bottom | AnchorStyles.Left
+            };
+            _exportButton.Click += ExportButton_Click;
+            this.Controls.Add(_exportButton);
 
             // Settings
             _startWithWindowsCheckBox = new CheckBox
@@ -157,11 +188,14 @@ namespace QuickLauncher
         private void LoadShortcuts()
         {
             _shortcutsListView.Items.Clear();
+            _iconImageList.Images.Clear();
+            
+            int iconIndex = 0;
             foreach (var shortcut in _settings.Shortcuts)
             {
-                string appsDisplay = shortcut.ExePaths.Count == 1 
-                    ? shortcut.ExePaths[0] 
-                    : $"{shortcut.ExePaths.Count} applications";
+                string appsDisplay = shortcut.Apps.Count == 1 
+                    ? shortcut.Apps[0].ExePath 
+                    : $"{shortcut.Apps.Count} applications";
                 
                 var item = new ListViewItem(new[]
                 {
@@ -169,6 +203,24 @@ namespace QuickLauncher
                     appsDisplay,
                     shortcut.KeyDisplayName
                 });
+                
+                // Extract and set icon from first app
+                if (shortcut.Apps.Count > 0 && File.Exists(shortcut.Apps[0].ExePath))
+                {
+                    try
+                    {
+                        using (Icon icon = Icon.ExtractAssociatedIcon(shortcut.Apps[0].ExePath)!)
+                        {
+                            _iconImageList.Images.Add(icon);
+                            item.ImageIndex = iconIndex++;
+                        }
+                    }
+                    catch
+                    {
+                        // If icon extraction fails, continue without icon
+                    }
+                }
+                
                 item.Tag = shortcut;
                 _shortcutsListView.Items.Add(item);
             }
@@ -204,33 +256,48 @@ namespace QuickLauncher
 
         private void LaunchApplication(AppShortcut shortcut)
         {
-            foreach (var exePath in shortcut.ExePaths)
+            for (int i = 0; i < shortcut.Apps.Count; i++)
             {
+                var app = shortcut.Apps[i];
                 try
                 {
-                    if (File.Exists(exePath))
+                    if (File.Exists(app.ExePath))
                     {
-                        Process.Start(new ProcessStartInfo
+                        var startInfo = new ProcessStartInfo
                         {
-                            FileName = exePath,
+                            FileName = app.ExePath,
+                            Arguments = app.Arguments ?? "",
                             UseShellExecute = true
-                        });
+                        };
+                        
+                        if (app.RunAsAdmin)
+                        {
+                            startInfo.Verb = "runas";
+                        }
+                        
+                        Process.Start(startInfo);
+                        
+                        // Add delay between launches (except after the last app)
+                        if (i < shortcut.Apps.Count - 1 && shortcut.LaunchDelay > 0)
+                        {
+                            System.Threading.Thread.Sleep(shortcut.LaunchDelay);
+                        }
                     }
                     else
                     {
-                        MessageBox.Show($"Application not found: {exePath}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        MessageBox.Show($"Application not found: {app.ExePath}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"Error launching application {exePath}: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show($"Error launching application {app.ExePath}: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
         }
 
         private void AddButton_Click(object? sender, EventArgs e)
         {
-            using (var dialog = new ShortcutDialog())
+            using (var dialog = new ShortcutDialog(null, _settings))
             {
                 if (dialog.ShowDialog() == DialogResult.OK)
                 {
@@ -253,7 +320,7 @@ namespace QuickLauncher
             var selectedItem = _shortcutsListView.SelectedItems[0];
             var shortcut = (AppShortcut)selectedItem.Tag!;
             
-            using (var dialog = new ShortcutDialog(shortcut))
+            using (var dialog = new ShortcutDialog(shortcut, _settings))
             {
                 if (dialog.ShowDialog() == DialogResult.OK)
                 {
@@ -294,12 +361,72 @@ namespace QuickLauncher
             SettingsManager.SaveSettings(_settings);
         }
 
+        private void ImportButton_Click(object? sender, EventArgs e)
+        {
+            using (OpenFileDialog dialog = new OpenFileDialog())
+            {
+                dialog.Filter = "JSON Files (*.json)|*.json|All Files (*.*)|*.*";
+                dialog.Title = "Import Shortcuts";
+                
+                if (dialog.ShowDialog() == DialogResult.OK)
+                {
+                    try
+                    {
+                        var importedSettings = SettingsManager.LoadSettingsFromFile(dialog.FileName);
+                        
+                        var result = MessageBox.Show(
+                            $"Import {importedSettings.Shortcuts.Count} shortcuts?\n\nThis will replace your current shortcuts.",
+                            "Confirm Import",
+                            MessageBoxButtons.YesNo,
+                            MessageBoxIcon.Question);
+                        
+                        if (result == DialogResult.Yes)
+                        {
+                            _settings.Shortcuts = importedSettings.Shortcuts;
+                            SettingsManager.SaveSettings(_settings);
+                            LoadShortcuts();
+                            RegisterAllHotkeys();
+                            MessageBox.Show("Shortcuts imported successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"Error importing shortcuts: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                }
+            }
+        }
+
+        private void ExportButton_Click(object? sender, EventArgs e)
+        {
+            using (SaveFileDialog dialog = new SaveFileDialog())
+            {
+                dialog.Filter = "JSON Files (*.json)|*.json|All Files (*.*)|*.*";
+                dialog.Title = "Export Shortcuts";
+                dialog.FileName = "quicklauncher-shortcuts.json";
+                
+                if (dialog.ShowDialog() == DialogResult.OK)
+                {
+                    try
+                    {
+                        SettingsManager.ExportSettings(_settings, dialog.FileName);
+                        MessageBox.Show("Shortcuts exported successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"Error exporting shortcuts: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                }
+            }
+        }
+
         protected override void Dispose(bool disposing)
         {
             if (disposing)
             {
                 _trayIcon?.Dispose();
                 _trayMenu?.Dispose();
+                _iconImageList?.Dispose();
             }
             base.Dispose(disposing);
         }

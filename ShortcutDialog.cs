@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
+using System.Linq;
 using System.Windows.Forms;
 
 namespace QuickLauncher
@@ -11,27 +13,42 @@ namespace QuickLauncher
         private ListBox _appsListBox;
         private Button _addAppButton;
         private Button _removeAppButton;
+        private Button _editAppButton;
         private TextBox _shortcutTextBox;
+        private NumericUpDown _delayNumeric;
         private Button _okButton;
         private Button _cancelButton;
         private bool _capturingHotkey = false;
         private int _capturedModifiers = 0;
         private int _capturedKeyCode = 0;
+        private List<AppInfo> _appsList = new List<AppInfo>();
+        private Settings? _allSettings;
+        private AppShortcut? _originalShortcut;
 
         public AppShortcut Shortcut { get; private set; }
 
-        public ShortcutDialog(AppShortcut? existingShortcut = null)
+        public ShortcutDialog(AppShortcut? existingShortcut = null, Settings? allSettings = null)
         {
+            _originalShortcut = existingShortcut;
+            _allSettings = allSettings;
+            
             if (existingShortcut != null)
             {
                 Shortcut = new AppShortcut
                 {
                     Name = existingShortcut.Name,
-                    ExePaths = new System.Collections.Generic.List<string>(existingShortcut.ExePaths),
+                    Apps = new System.Collections.Generic.List<AppInfo>(existingShortcut.Apps.Select(a => new AppInfo 
+                    { 
+                        ExePath = a.ExePath, 
+                        Arguments = a.Arguments, 
+                        RunAsAdmin = a.RunAsAdmin 
+                    })),
                     Modifiers = existingShortcut.Modifiers,
                     KeyCode = existingShortcut.KeyCode,
-                    KeyDisplayName = existingShortcut.KeyDisplayName
+                    KeyDisplayName = existingShortcut.KeyDisplayName,
+                    LaunchDelay = existingShortcut.LaunchDelay
                 };
+                _appsList = new System.Collections.Generic.List<AppInfo>(Shortcut.Apps);
             }
             else
             {
@@ -45,7 +62,7 @@ namespace QuickLauncher
         private void InitializeComponent()
         {
             this.Text = "Add/Edit Shortcut";
-            this.Size = new Size(500, 380);
+            this.Size = new Size(520, 450);
             this.StartPosition = FormStartPosition.CenterParent;
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
             this.MaximizeBox = false;
@@ -63,7 +80,7 @@ namespace QuickLauncher
             _nameTextBox = new TextBox
             {
                 Location = new Point(120, 12),
-                Size = new Size(350, 20)
+                Size = new Size(370, 20)
             };
             this.Controls.Add(_nameTextBox);
 
@@ -79,7 +96,7 @@ namespace QuickLauncher
             _appsListBox = new ListBox
             {
                 Location = new Point(120, 42),
-                Size = new Size(350, 120)
+                Size = new Size(370, 120)
             };
             this.Controls.Add(_appsListBox);
 
@@ -92,28 +109,66 @@ namespace QuickLauncher
             _addAppButton.Click += AddAppButton_Click;
             this.Controls.Add(_addAppButton);
 
+            _editAppButton = new Button
+            {
+                Text = "Edit...",
+                Location = new Point(220, 170),
+                Size = new Size(90, 25)
+            };
+            _editAppButton.Click += EditAppButton_Click;
+            this.Controls.Add(_editAppButton);
+
             _removeAppButton = new Button
             {
                 Text = "Remove",
-                Location = new Point(220, 170),
+                Location = new Point(320, 170),
                 Size = new Size(90, 25)
             };
             _removeAppButton.Click += RemoveAppButton_Click;
             this.Controls.Add(_removeAppButton);
 
+            // Launch Delay
+            Label delayLabel = new Label
+            {
+                Text = "Launch Delay:",
+                Location = new Point(10, 210),
+                Size = new Size(100, 20)
+            };
+            this.Controls.Add(delayLabel);
+
+            _delayNumeric = new NumericUpDown
+            {
+                Location = new Point(120, 207),
+                Size = new Size(100, 20),
+                Minimum = 0,
+                Maximum = 10000,
+                Increment = 100,
+                Value = 0
+            };
+            this.Controls.Add(_delayNumeric);
+
+            Label delayInfo = new Label
+            {
+                Text = "ms (delay between launching apps)",
+                Location = new Point(230, 210),
+                Size = new Size(260, 20),
+                ForeColor = Color.Gray
+            };
+            this.Controls.Add(delayInfo);
+
             // Shortcut
             Label shortcutLabel = new Label
             {
                 Text = "Shortcut:",
-                Location = new Point(10, 210),
+                Location = new Point(10, 245),
                 Size = new Size(100, 20)
             };
             this.Controls.Add(shortcutLabel);
 
             _shortcutTextBox = new TextBox
             {
-                Location = new Point(120, 207),
-                Size = new Size(350, 20),
+                Location = new Point(120, 242),
+                Size = new Size(370, 20),
                 ReadOnly = true,
                 PlaceholderText = "Click here and press your desired shortcut..."
             };
@@ -127,8 +182,8 @@ namespace QuickLauncher
             Label infoLabel = new Label
             {
                 Text = "Use Ctrl, Alt, Shift, or Win + a key (e.g., Ctrl+Alt+A)",
-                Location = new Point(120, 235),
-                Size = new Size(350, 20),
+                Location = new Point(120, 270),
+                Size = new Size(370, 20),
                 ForeColor = Color.Gray
             };
             this.Controls.Add(infoLabel);
@@ -137,7 +192,7 @@ namespace QuickLauncher
             _okButton = new Button
             {
                 Text = "OK",
-                Location = new Point(310, 300),
+                Location = new Point(330, 360),
                 Size = new Size(75, 30),
                 DialogResult = DialogResult.OK
             };
@@ -147,7 +202,7 @@ namespace QuickLauncher
             _cancelButton = new Button
             {
                 Text = "Cancel",
-                Location = new Point(395, 300),
+                Location = new Point(415, 360),
                 Size = new Size(75, 30),
                 DialogResult = DialogResult.Cancel
             };
@@ -160,14 +215,25 @@ namespace QuickLauncher
         private void LoadShortcutData()
         {
             _nameTextBox.Text = Shortcut.Name;
-            _appsListBox.Items.Clear();
-            foreach (var exePath in Shortcut.ExePaths)
-            {
-                _appsListBox.Items.Add(exePath);
-            }
+            _delayNumeric.Value = Shortcut.LaunchDelay;
+            RefreshAppsList();
             _shortcutTextBox.Text = Shortcut.KeyDisplayName;
             _capturedModifiers = Shortcut.Modifiers;
             _capturedKeyCode = Shortcut.KeyCode;
+        }
+
+        private void RefreshAppsList()
+        {
+            _appsListBox.Items.Clear();
+            foreach (var app in _appsList)
+            {
+                string display = Path.GetFileName(app.ExePath);
+                if (!string.IsNullOrWhiteSpace(app.Arguments))
+                    display += $" [{app.Arguments}]";
+                if (app.RunAsAdmin)
+                    display += " [Admin]";
+                _appsListBox.Items.Add(display);
+            }
         }
 
         private void AddAppButton_Click(object? sender, EventArgs e)
@@ -182,11 +248,22 @@ namespace QuickLauncher
                 {
                     foreach (var fileName in dialog.FileNames)
                     {
-                        if (!_appsListBox.Items.Contains(fileName))
+                        if (!_appsList.Any(a => a.ExePath == fileName))
                         {
-                            _appsListBox.Items.Add(fileName);
+                            var appInfo = new AppInfo { ExePath = fileName };
+                            
+                            // Show app details dialog
+                            using (var detailsDialog = new AppDetailsDialog(appInfo))
+                            {
+                                if (detailsDialog.ShowDialog() == DialogResult.OK)
+                                {
+                                    _appsList.Add(detailsDialog.AppInfo);
+                                }
+                            }
                         }
                     }
+                    
+                    RefreshAppsList();
                     
                     if (string.IsNullOrWhiteSpace(_nameTextBox.Text) && dialog.FileNames.Length == 1)
                     {
@@ -196,11 +273,28 @@ namespace QuickLauncher
             }
         }
 
+        private void EditAppButton_Click(object? sender, EventArgs e)
+        {
+            if (_appsListBox.SelectedIndex >= 0)
+            {
+                var app = _appsList[_appsListBox.SelectedIndex];
+                using (var detailsDialog = new AppDetailsDialog(app))
+                {
+                    if (detailsDialog.ShowDialog() == DialogResult.OK)
+                    {
+                        _appsList[_appsListBox.SelectedIndex] = detailsDialog.AppInfo;
+                        RefreshAppsList();
+                    }
+                }
+            }
+        }
+
         private void RemoveAppButton_Click(object? sender, EventArgs e)
         {
             if (_appsListBox.SelectedIndex >= 0)
             {
-                _appsListBox.Items.RemoveAt(_appsListBox.SelectedIndex);
+                _appsList.RemoveAt(_appsListBox.SelectedIndex);
+                RefreshAppsList();
             }
         }
 
@@ -273,7 +367,7 @@ namespace QuickLauncher
                 return;
             }
 
-            if (_appsListBox.Items.Count == 0)
+            if (_appsList.Count == 0)
             {
                 MessageBox.Show("Please add at least one application.", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 this.DialogResult = DialogResult.None;
@@ -281,12 +375,11 @@ namespace QuickLauncher
             }
 
             // Validate all paths exist
-            foreach (var item in _appsListBox.Items)
+            foreach (var app in _appsList)
             {
-                string path = item.ToString()!;
-                if (!File.Exists(path))
+                if (!File.Exists(app.ExePath))
                 {
-                    MessageBox.Show($"Application not found: {path}", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    MessageBox.Show($"Application not found: {app.ExePath}", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     this.DialogResult = DialogResult.None;
                     return;
                 }
@@ -299,16 +392,41 @@ namespace QuickLauncher
                 return;
             }
 
+            // Check for hotkey conflicts
+            if (_allSettings != null)
+            {
+                foreach (var existingShortcut in _allSettings.Shortcuts)
+                {
+                    // Skip checking against itself when editing
+                    if (_originalShortcut != null && existingShortcut == _originalShortcut)
+                        continue;
+                        
+                    if (existingShortcut.Modifiers == _capturedModifiers && existingShortcut.KeyCode == _capturedKeyCode)
+                    {
+                        var result = MessageBox.Show(
+                            $"The hotkey '{_shortcutTextBox.Text}' is already used by '{existingShortcut.Name}'.\n\nDo you want to use it anyway? (The other shortcut will stop working)",
+                            "Hotkey Conflict",
+                            MessageBoxButtons.YesNo,
+                            MessageBoxIcon.Warning);
+                        
+                        if (result == DialogResult.No)
+                        {
+                            this.DialogResult = DialogResult.None;
+                            return;
+                        }
+                        break;
+                    }
+                }
+            }
+
             // Save
             Shortcut.Name = _nameTextBox.Text;
-            Shortcut.ExePaths.Clear();
-            foreach (var item in _appsListBox.Items)
-            {
-                Shortcut.ExePaths.Add(item.ToString()!);
-            }
+            Shortcut.Apps.Clear();
+            Shortcut.Apps.AddRange(_appsList);
             Shortcut.Modifiers = _capturedModifiers;
             Shortcut.KeyCode = _capturedKeyCode;
             Shortcut.KeyDisplayName = _shortcutTextBox.Text;
+            Shortcut.LaunchDelay = (int)_delayNumeric.Value;
         }
     }
 }
