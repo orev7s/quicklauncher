@@ -983,35 +983,85 @@ namespace QuickLauncher
         {
             if (_settings.DarkMode)
             {
-                // Apply dark theme
-                this.BackColor = Color.FromArgb(30, 30, 30);
-                this.ForeColor = Color.White;
+                // Modern dark theme with better contrast
+                Color darkBg = Color.FromArgb(32, 32, 32);           // Main background
+                Color darkControlBg = Color.FromArgb(45, 45, 48);    // Control background
+                Color darkListBg = Color.FromArgb(30, 30, 30);       // List background
+                Color darkBorder = Color.FromArgb(63, 63, 70);       // Borders
+                Color brightText = Color.FromArgb(241, 241, 241);    // Primary text
+                Color dimText = Color.FromArgb(204, 204, 204);       // Secondary text
+                Color accentBlue = Color.FromArgb(0, 122, 204);      // Accent color
                 
-                _tabControl.BackColor = Color.FromArgb(37, 37, 38);
-                _tabControl.ForeColor = Color.White;
+                this.BackColor = darkBg;
+                this.ForeColor = brightText;
                 
-                _shortcutsListView.BackColor = Color.FromArgb(37, 37, 38);
-                _shortcutsListView.ForeColor = Color.White;
+                // Tab control
+                _tabControl.BackColor = darkBg;
+                _tabControl.ForeColor = brightText;
                 
-                _clipboardShortcutsListView.BackColor = Color.FromArgb(37, 37, 38);
-                _clipboardShortcutsListView.ForeColor = Color.White;
+                // ListViews with better visibility
+                _shortcutsListView.BackColor = darkListBg;
+                _shortcutsListView.ForeColor = brightText;
+                _shortcutsListView.BorderStyle = BorderStyle.FixedSingle;
+                
+                _clipboardShortcutsListView.BackColor = darkListBg;
+                _clipboardShortcutsListView.ForeColor = brightText;
+                _clipboardShortcutsListView.BorderStyle = BorderStyle.FixedSingle;
+                
+                // Style all controls
+                foreach (Control control in this.Controls)
+                {
+                    if (control is Button button)
+                    {
+                        button.BackColor = darkControlBg;
+                        button.ForeColor = brightText;
+                        button.FlatStyle = FlatStyle.Flat;
+                        button.FlatAppearance.BorderColor = darkBorder;
+                        button.FlatAppearance.MouseOverBackColor = Color.FromArgb(62, 62, 64);
+                        button.FlatAppearance.MouseDownBackColor = accentBlue;
+                    }
+                    else if (control is CheckBox checkbox)
+                    {
+                        checkbox.ForeColor = brightText;
+                    }
+                    else if (control is Label label)
+                    {
+                        label.ForeColor = dimText;
+                    }
+                }
+            }
+            else
+            {
+                // Reset to default light theme
+                this.BackColor = SystemColors.Control;
+                this.ForeColor = SystemColors.ControlText;
+                
+                _tabControl.BackColor = SystemColors.Control;
+                _tabControl.ForeColor = SystemColors.ControlText;
+                
+                _shortcutsListView.BackColor = SystemColors.Window;
+                _shortcutsListView.ForeColor = SystemColors.WindowText;
+                _shortcutsListView.BorderStyle = BorderStyle.Fixed3D;
+                
+                _clipboardShortcutsListView.BackColor = SystemColors.Window;
+                _clipboardShortcutsListView.ForeColor = SystemColors.WindowText;
+                _clipboardShortcutsListView.BorderStyle = BorderStyle.Fixed3D;
                 
                 foreach (Control control in this.Controls)
                 {
                     if (control is Button button)
                     {
-                        button.BackColor = Color.FromArgb(45, 45, 48);
-                        button.ForeColor = Color.White;
-                        button.FlatStyle = FlatStyle.Flat;
-                        button.FlatAppearance.BorderColor = Color.FromArgb(63, 63, 70);
+                        button.BackColor = SystemColors.Control;
+                        button.ForeColor = SystemColors.ControlText;
+                        button.FlatStyle = FlatStyle.Standard;
                     }
                     else if (control is CheckBox checkbox)
                     {
-                        checkbox.ForeColor = Color.White;
+                        checkbox.ForeColor = SystemColors.ControlText;
                     }
                     else if (control is Label label)
                     {
-                        label.ForeColor = Color.FromArgb(180, 180, 180);
+                        label.ForeColor = SystemColors.ControlText;
                     }
                 }
             }
