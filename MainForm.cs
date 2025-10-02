@@ -119,11 +119,12 @@ namespace QuickLauncher
             {
                 Text = "Add Shortcut",
                 Location = new Point(10, 410),
-                Size = new Size(120, 35),
+                Size = new Size(150, 35),
                 Anchor = AnchorStyles.Bottom | AnchorStyles.Left,
                 Font = new Font("Segoe UI", 9.5F, FontStyle.Regular),
                 UseVisualStyleBackColor = true,
-                TextAlign = ContentAlignment.MiddleCenter
+                TextAlign = ContentAlignment.MiddleCenter,
+                AutoSize = false
             };
             _addButton.Click += AddButton_Click;
             this.Controls.Add(_addButton);
@@ -131,7 +132,7 @@ namespace QuickLauncher
             _editButton = new Button
             {
                 Text = "Edit",
-                Location = new Point(140, 410),
+                Location = new Point(170, 410),
                 Size = new Size(90, 35),
                 Anchor = AnchorStyles.Bottom | AnchorStyles.Left,
                 Font = new Font("Segoe UI", 9.5F, FontStyle.Regular),
@@ -144,7 +145,7 @@ namespace QuickLauncher
             _removeButton = new Button
             {
                 Text = "Remove",
-                Location = new Point(240, 410),
+                Location = new Point(270, 410),
                 Size = new Size(90, 35),
                 Anchor = AnchorStyles.Bottom | AnchorStyles.Left,
                 Font = new Font("Segoe UI", 9.5F, FontStyle.Regular),
@@ -551,6 +552,7 @@ namespace QuickLauncher
             {
                 // App Shortcuts tab
                 _addButton.Text = "Add Shortcut";
+                _addButton.TextAlign = ContentAlignment.MiddleCenter;
                 _addButton.Visible = true;
                 _editButton.Visible = true;
                 _removeButton.Visible = true;
@@ -561,6 +563,7 @@ namespace QuickLauncher
             {
                 // Paste Shortcuts tab
                 _addButton.Text = "Add Paste Shortcut";
+                _addButton.TextAlign = ContentAlignment.MiddleCenter;
                 _addButton.Visible = true;
                 _editButton.Visible = true;
                 _removeButton.Visible = true;
