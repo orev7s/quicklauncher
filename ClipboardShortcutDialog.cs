@@ -8,6 +8,7 @@ namespace QuickLauncher
     {
         private TextBox _nameTextBox;
         private TextBox _contentTextBox;
+        private CheckBox _useTemplateVariablesCheckBox;
         private TextBox _shortcutTextBox;
         private Button _okButton;
         private Button _cancelButton;
@@ -97,19 +98,28 @@ namespace QuickLauncher
                 ForeColor = Color.Gray
             };
             this.Controls.Add(contentInfo);
+            
+            // Use Template Variables
+            _useTemplateVariablesCheckBox = new CheckBox
+            {
+                Text = "Use template variables ({{date}}, {{username}}, etc.)",
+                Location = new Point(120, 248),
+                Size = new Size(370, 20)
+            };
+            this.Controls.Add(_useTemplateVariablesCheckBox);
 
             // Shortcut
             Label shortcutLabel = new Label
             {
                 Text = "Shortcut:",
-                Location = new Point(10, 260),
+                Location = new Point(10, 280),
                 Size = new Size(100, 20)
             };
             this.Controls.Add(shortcutLabel);
 
             _shortcutTextBox = new TextBox
             {
-                Location = new Point(120, 257),
+                Location = new Point(120, 277),
                 Size = new Size(370, 20),
                 ReadOnly = true,
                 PlaceholderText = "Click here and press your desired shortcut..."
@@ -124,7 +134,7 @@ namespace QuickLauncher
             Label infoLabel = new Label
             {
                 Text = "Use Ctrl, Alt, Shift, or Win + a key (e.g., Ctrl+Alt+V)",
-                Location = new Point(120, 285),
+                Location = new Point(120, 305),
                 Size = new Size(370, 20),
                 ForeColor = Color.Gray
             };
@@ -158,6 +168,7 @@ namespace QuickLauncher
         {
             _nameTextBox.Text = Shortcut.Name;
             _contentTextBox.Text = Shortcut.Content;
+            _useTemplateVariablesCheckBox.Checked = Shortcut.UseTemplateVariables;
             _shortcutTextBox.Text = Shortcut.KeyDisplayName;
             _capturedModifiers = Shortcut.Modifiers;
             _capturedKeyCode = Shortcut.KeyCode;
@@ -290,6 +301,7 @@ namespace QuickLauncher
             // Save
             Shortcut.Name = _nameTextBox.Text;
             Shortcut.Content = _contentTextBox.Text;
+            Shortcut.UseTemplateVariables = _useTemplateVariablesCheckBox.Checked;
             Shortcut.Modifiers = _capturedModifiers;
             Shortcut.KeyCode = _capturedKeyCode;
             Shortcut.KeyDisplayName = _shortcutTextBox.Text;

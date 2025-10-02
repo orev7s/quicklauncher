@@ -31,6 +31,7 @@ namespace QuickLauncher
         private Button _editClipboardButton;
         private Button _removeClipboardButton;
         private CheckBox _startWithWindowsCheckBox;
+        private Button _settingsButton;
         private NotifyIcon _trayIcon;
         private ContextMenuStrip _trayMenu;
 
@@ -207,6 +208,18 @@ namespace QuickLauncher
             };
             _startWithWindowsCheckBox.CheckedChanged += StartWithWindowsCheckBox_CheckedChanged;
             this.Controls.Add(_startWithWindowsCheckBox);
+            
+            // Settings Button
+            _settingsButton = new Button
+            {
+                Text = "Settings...",
+                Location = new Point(220, 455),
+                Size = new Size(100, 25),
+                Anchor = AnchorStyles.Bottom | AnchorStyles.Left,
+                Font = new Font("Segoe UI", 9.5F, FontStyle.Regular)
+            };
+            _settingsButton.Click += SettingsButton_Click;
+            this.Controls.Add(_settingsButton);
 
             // Info label
             Label infoLabel = new Label
@@ -749,6 +762,24 @@ namespace QuickLauncher
             _settings.StartWithWindows = _startWithWindowsCheckBox.Checked;
             StartupManager.SetStartup(_settings.StartWithWindows);
             SettingsManager.SaveSettings(_settings);
+        }
+        
+        private void SettingsButton_Click(object? sender, EventArgs e)
+        {
+            using (var dialog = new SettingsDialog(_settings))
+            {
+                if (dialog.ShowDialog() == DialogResult.OK)
+                {
+                    // Reload hotkeys with updated command palette hotkey
+                    RegisterAllHotkeys();
+                    
+                    // Apply theme if changed
+                    ApplyTheme();
+                    
+                    MessageBox.Show("Settings saved successfully!\n\nSome changes may require a restart.",
+                        "Settings", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+            }
         }
 
         private void ImportButton_Click(object? sender, EventArgs e)
