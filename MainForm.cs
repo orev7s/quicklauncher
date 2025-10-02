@@ -60,7 +60,8 @@ namespace QuickLauncher
             {
                 Location = new Point(10, 10),
                 Size = new Size(660, 390),
-                Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right
+                Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right,
+                SelectedIndex = 0
             };
             _tabControl.SelectedIndexChanged += TabControl_SelectedIndexChanged;
             this.Controls.Add(_tabControl);
@@ -121,7 +122,8 @@ namespace QuickLauncher
                 Size = new Size(120, 35),
                 Anchor = AnchorStyles.Bottom | AnchorStyles.Left,
                 Font = new Font("Segoe UI", 9.5F, FontStyle.Regular),
-                UseVisualStyleBackColor = true
+                UseVisualStyleBackColor = true,
+                TextAlign = ContentAlignment.MiddleCenter
             };
             _addButton.Click += AddButton_Click;
             this.Controls.Add(_addButton);
@@ -133,7 +135,8 @@ namespace QuickLauncher
                 Size = new Size(90, 35),
                 Anchor = AnchorStyles.Bottom | AnchorStyles.Left,
                 Font = new Font("Segoe UI", 9.5F, FontStyle.Regular),
-                UseVisualStyleBackColor = true
+                UseVisualStyleBackColor = true,
+                TextAlign = ContentAlignment.MiddleCenter
             };
             _editButton.Click += EditButton_Click;
             this.Controls.Add(_editButton);
@@ -145,7 +148,8 @@ namespace QuickLauncher
                 Size = new Size(90, 35),
                 Anchor = AnchorStyles.Bottom | AnchorStyles.Left,
                 Font = new Font("Segoe UI", 9.5F, FontStyle.Regular),
-                UseVisualStyleBackColor = true
+                UseVisualStyleBackColor = true,
+                TextAlign = ContentAlignment.MiddleCenter
             };
             _removeButton.Click += RemoveButton_Click;
             this.Controls.Add(_removeButton);
@@ -157,7 +161,8 @@ namespace QuickLauncher
                 Size = new Size(110, 35),
                 Anchor = AnchorStyles.Bottom | AnchorStyles.Left,
                 Font = new Font("Segoe UI", 9.5F, FontStyle.Regular),
-                UseVisualStyleBackColor = true
+                UseVisualStyleBackColor = true,
+                TextAlign = ContentAlignment.MiddleCenter
             };
             _importButton.Click += ImportButton_Click;
             this.Controls.Add(_importButton);
@@ -169,7 +174,8 @@ namespace QuickLauncher
                 Size = new Size(110, 35),
                 Anchor = AnchorStyles.Bottom | AnchorStyles.Left,
                 Font = new Font("Segoe UI", 9.5F, FontStyle.Regular),
-                UseVisualStyleBackColor = true
+                UseVisualStyleBackColor = true,
+                TextAlign = ContentAlignment.MiddleCenter
             };
             _exportButton.Click += ExportButton_Click;
             this.Controls.Add(_exportButton);

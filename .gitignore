@@ -104,3 +104,6 @@ settings.json
 
 # Icon file
 *.ico
+
+# Warp AI rules
+WARP.md
