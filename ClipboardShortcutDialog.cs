@@ -85,6 +85,8 @@ namespace QuickLauncher
                 Location = new Point(120, 42),
                 Size = new Size(370, 180),
                 Multiline = true,
+                AcceptsReturn = true,
+                AcceptsTab = true,
                 ScrollBars = ScrollBars.Vertical,
                 PlaceholderText = "Enter the text you want to paste..."
             };
