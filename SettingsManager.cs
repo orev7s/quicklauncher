@@ -11,6 +11,22 @@ namespace QuickLauncher
         public List<ClipboardShortcut> ClipboardShortcuts { get; set; } = new List<ClipboardShortcut>();
         public bool StartWithWindows { get; set; } = false;
         public bool MinimizeToTray { get; set; } = true;
+        
+        // New features
+        public List<Profile> Profiles { get; set; } = new List<Profile>();
+        public string? ActiveProfileId { get; set; }
+        public List<ShortcutGroup> Groups { get; set; } = new List<ShortcutGroup>();
+        
+        // UI settings
+        public bool DarkMode { get; set; } = false;
+        public bool ShowNotifications { get; set; } = true;
+        public bool EnableLogging { get; set; } = true;
+        public LogLevel LogLevel { get; set; } = LogLevel.Info;
+        
+        // Command palette settings
+        public string CommandPaletteHotkey { get; set; } = "Ctrl+Shift+Space";
+        public int CommandPaletteHotkeyModifiers { get; set; } = 0;
+        public int CommandPaletteHotkeyKeyCode { get; set; } = 0;
     }
 
     public static class SettingsManager

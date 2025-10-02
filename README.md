@@ -8,27 +8,78 @@ A lightweight Windows application that allows you to launch single or multiple a
 
 ## Features
 
-### App Shortcuts
+### 🎯 Core Features
+
+#### App Shortcuts
 ✨ **Global Keyboard Shortcuts** - Launch applications from anywhere with customizable hotkeys  
 🚀 **Multiple Apps Per Shortcut** - Launch several applications at once with a single keypress  
-🎯 **Custom Naming** - Name your shortcuts like "Development Apps", "Games", etc.  
+🎯 **Custom Naming & Categories** - Organize shortcuts like "Development Apps", "Games", etc.  
 🎨 **Application Icons** - Visual identification with app icons in the shortcut list  
 ⚙️ **Command-Line Arguments** - Pass custom arguments to each application  
 🛡️ **Run as Administrator** - Launch apps with elevated privileges when needed  
-⏱️ **Launch Delay** - Configure delay between launching multiple apps  
+⏱️ **Flexible Launch Delays** - Fixed delay, wait for process, window, or network  
+⚡ **Parallel/Sequential Launch** - Launch all apps at once or one by one  
 
-### Paste Shortcuts
+#### Paste Shortcuts
 📋 **Instant Text Pasting** - Paste predefined text snippets with a keyboard shortcut  
 ✍️ **Multi-line Support** - Store and paste prompts, emails, code snippets, recipes, and more  
+🔄 **Snippet Cycling** - Multiple variations that cycle on each activation  
+📝 **Template Variables** - Dynamic content with date, time, username, clipboard, GUID, and more  
 ⚡ **Quick Access** - Skip clipboard managers and paste directly with your custom hotkey  
-🔖 **Organized Templates** - Keep frequently used text organized and ready to paste  
 
-### General Features
-🔍 **Hotkey Conflict Detection** - Warns when hotkeys conflict with existing shortcuts  
-📤 **Import/Export** - Share or backup your shortcuts configuration  
-💾 **Persistent Settings** - Your shortcuts are automatically saved and loaded  
+### 🎪 Advanced Features
+
+#### Smart Launching
+🧠 **Conditional Logic** - Only launch if conditions are met (network, battery, AC power)  
+🎯 **Launch Behaviors** - Launch if not running, bring to front, or always launch new instance  
+🔍 **Process Detection** - Check if apps are running before launching  
+⚡ **Smart Window Management** - Automatically bring existing windows to front  
+
+#### Window Positioning & Multi-Monitor
+🖥️ **Multi-Monitor Support** - Position windows on specific monitors  
+📐 **Precise Positioning** - Set exact X, Y coordinates and window size  
+📏 **Window States** - Maximize, minimize, fullscreen, or normal  
+💾 **Remember Layouts** - Automatically save and restore window positions  
+
+#### Profiles & Context Switching
+🎭 **Multiple Profiles** - Create different profiles for Work, Gaming, Personal, etc.  
+🔄 **Auto-Switch Profiles** - Automatically activate profiles based on context  
+⏰ **Time-Based Switching** - Activate profiles at specific times or days  
+🖥️ **Monitor-Based** - Switch when specific monitors are connected  
+💻 **App-Based** - Activate profiles when certain apps are running  
+🌐 **Network-Based** - Switch based on network availability  
+🔋 **Battery-Based** - Activate profiles based on battery level or AC power  
+⚡ **Priority System** - Higher priority profiles override lower ones  
+
+#### Search & Command Palette
+🔍 **Fuzzy Search** - Search all shortcuts by name, description, or category  
+⌨️ **Keyboard-Driven** - No mouse needed, navigate with arrow keys  
+🎯 **Quick Launch** - Find and execute shortcuts without remembering hotkeys  
+📊 **Grouped Results** - Results organized by category  
+⚡ **Default Hotkey** - Ctrl+Shift+Space (customizable)  
+
+#### Groups & Organization
+📁 **Shortcut Groups** - Organize related shortcuts together  
+🔄 **Bulk Enable/Disable** - Toggle entire groups on/off  
+🏷️ **Categories** - Categorize shortcuts and groups for better organization  
+🎯 **Profile Integration** - Link groups to profiles for context-based activation  
+
+### 🎨 UI & Customization
+
+🌙 **Dark Mode** - Easy on the eyes with modern dark theme  
+🔔 **Toast Notifications** - Visual feedback for actions with elegant notifications  
+🎨 **Customizable Interface** - Resize windows, customize columns  
+📊 **Modern Design** - Clean, flat design that's easy to navigate  
+
+### 🔧 Technical Features
+
+📊 **Comprehensive Logging** - Debug and track all actions  
+📁 **Auto Log Cleanup** - Keeps last 7 days automatically  
+🔍 **Hotkey Conflict Detection** - Smart warnings for duplicate hotkeys  
+📤 **Import/Export** - Share or backup your complete configuration  
+💾 **Persistent Settings** - Everything saved automatically  
 🔔 **System Tray Integration** - Runs quietly in the background  
-⚡ **Lightweight** - Minimal resource usage  
+⚡ **Lightweight & Fast** - Minimal resource usage, async operations  
 🪟 **Start with Windows** - Optional startup with Windows boot
 
 ## Screenshots
@@ -269,21 +320,166 @@ If you encounter any issues or have questions:
 - Open an [issue](https://github.com/orev7s/quicklauncher/issues) on GitHub
 - Check existing issues for solutions
 
-## Roadmap
+## 📖 Template Variables Reference
 
-- [x] Add application icons to the shortcut list
-- [x] Support for launching apps with command-line arguments
-- [x] Import/Export shortcuts configuration
+Use these variables in your paste shortcuts for dynamic content:
+
+### Date & Time
+- `{{date}}` - Current date (yyyy-MM-dd)
+- `{{date:FORMAT}}` - Custom date format (e.g., `{{date:MM/dd/yyyy}}`)
+- `{{time}}` - Current time (HH:mm:ss)
+- `{{datetime}}` - Date and time
+- `{{year}}`, `{{month}}`, `{{day}}` - Individual components
+- `{{dayofweek}}` - Day name (Monday, Tuesday, etc.)
+
+### System Information
+- `{{username}}` - Current Windows username
+- `{{computername}}` - Computer name
+- `{{userdomain}}` - User domain
+- `{{env:VAR_NAME}}` - Environment variable (e.g., `{{env:PATH}}`)
+
+### Dynamic Content
+- `{{clipboard}}` - Current clipboard content
+- `{{guid}}` - New GUID
+- `{{guid:n}}` - GUID without hyphens
+- `{{input:Prompt text}}` - Prompt user for input
+- `{{random:MIN:MAX}}` - Random number in range
+
+### Examples
+
+**Email Signature:**
+```
+Best regards,
+{{username}}
+{{computername}} | {{date}}
+```
+
+**Meeting Notes:**
+```
+Meeting Notes - {{date}}
+Time: {{time}}
+Attendees: {{input:Enter attendees}}
+
+Agenda:
+```
+
+**Code Comment:**
+```
+// Created by {{username}} on {{date}}
+// TODO: {{input:What needs to be done?}}
+```
+
+## 🎯 Use Cases
+
+### Developer Workflow
+- Launch IDE, browser, terminal, and database tool with one hotkey
+- Position each app on specific monitors
+- Insert code snippets with template variables
+- Auto-switch to "Dev" profile during work hours
+
+### Content Creator
+- Launch OBS, editing software, and asset managers
+- Cycle through different video descriptions
+- Use templates for video metadata
+- Profile-based switching for streaming vs editing
+
+### Remote Work
+- Launch meeting apps, communication tools, and task managers
+- Paste meeting notes templates
+- Auto-switch profiles based on time zones
+- Conditional launches based on network
+
+### Gaming
+- Launch Discord, game launchers, and streaming software
+- Paste team strategies or build orders
+- Profile activation when gaming apps are detected
+- Bring game to front if already running
+
+## 🐛 Troubleshooting
+
+### Hotkey Not Working
+- Check if another app is using the same hotkey
+- View logs at `%AppData%\QuickLauncher\logs\`
+- Try a different key combination
+- Restart QuickLauncher
+
+### App Won't Launch
+- Verify the exe path is correct
+- Check launch conditions are met (network, battery, etc.)
+- Review logs for error details
+- Ensure you have permissions to run the app
+
+### Profile Not Switching
+- Check trigger conditions in profile settings
+- Verify profile priority (higher priority wins)
+- Enable Debug logging to see evaluation details
+- Make sure auto-switching is enabled
+
+### Window Positioning Issues
+- Increase the wait time for window to appear
+- Some apps don't allow programmatic positioning
+- Check that monitor index is correct
+- Review window manager logs
+
+### Template Variables Not Working
+- Enable "Use Template Variables" checkbox
+- Check variable syntax: `{{variable}}`
+- Some variables require user input
+- Review logs for template processing errors
+
+## 📁 File Locations
+
+- **Settings**: `%AppData%\QuickLauncher\settings.json`
+- **Logs**: `%AppData%\QuickLauncher\logs\`
+- **Logs kept for**: 7 days (auto-cleanup)
+
+## 🎮 Pro Tips
+
+1. **Start Simple** - Create a few essential shortcuts first
+2. **Use Profiles** - Set up work and personal profiles for automatic switching
+3. **Command Palette** - When you forget a hotkey, use Ctrl+Shift+Space to search
+4. **Smart Launch** - Use "Bring to Front" for apps you keep open all day
+5. **Window Layouts** - Perfect for multi-monitor developer setups
+6. **Template Power** - Use variables for dynamic content in snippets
+7. **Groups** - Organize related shortcuts together for easier management
+8. **Logs** - Enable Debug logging when troubleshooting issues
+
+## 🚀 Roadmap
+
+### ✅ Completed
+- [x] Global keyboard shortcuts
+- [x] Multiple apps per shortcut
+- [x] Command-line arguments
+- [x] Run as administrator
+- [x] Import/Export configuration
 - [x] Hotkey conflict detection
-- [x] Delay between launching multiple apps
-- [x] Run applications as administrator option
-- [x] Paste shortcuts for instant text pasting
-- [ ] Dark mode theme
-- [ ] Profiles for different work contexts
-- [ ] Application window positioning
-- [ ] Startup delay for individual apps
-- [ ] Import/Export for paste shortcuts separately
-- [ ] Rich text format support for paste shortcuts
+- [x] Launch delays
+- [x] Paste shortcuts
+- [x] Dark mode theme
+- [x] Profiles and context switching
+- [x] Application window positioning
+- [x] Smart launching with conditions
+- [x] Template variables
+- [x] Command palette / fuzzy search
+- [x] Toast notifications
+- [x] Comprehensive logging
+- [x] Shortcut groups
+- [x] Multi-monitor support
+- [x] Process detection
+- [x] Parallel/sequential launching
+- [x] Snippet cycling
+
+### 🔮 Future Ideas
+- [ ] Cloud sync for settings
+- [ ] Macro recording and playback
+- [ ] Script execution support (PowerShell, Python)
+- [ ] Web URL shortcuts
+- [ ] Statistics dashboard
+- [ ] Scheduled backup
+- [ ] Plugin/extension system
+- [ ] Rich text formatting in paste shortcuts
+- [ ] Custom hotkey for profile switching
+- [ ] Global search across all text snippets
 
 ---
 

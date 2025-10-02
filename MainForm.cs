@@ -14,6 +14,8 @@ namespace QuickLauncher
         private HotkeyManager? _hotkeyManager;
         private Dictionary<int, AppShortcut> _hotkeyIdToShortcut = new Dictionary<int, AppShortcut>();
         private Dictionary<int, ClipboardShortcut> _hotkeyIdToClipboardShortcut = new Dictionary<int, ClipboardShortcut>();
+        private ProfileManager? _profileManager;
+        private int _commandPaletteHotkeyId = -1;
 
         // UI Controls
         private TabControl _tabControl;
@@ -38,11 +40,24 @@ namespace QuickLauncher
             _settings = SettingsManager.LoadSettings();
             _hotkeyManager = new HotkeyManager(this.Handle);
             
+            // Initialize logging
+            Logger.IsEnabled = _settings.EnableLogging;
+            Logger.MinimumLevel = _settings.LogLevel;
+            Logger.Info("QuickLauncher started");
+            
+            // Initialize profile manager
+            _profileManager = new ProfileManager(_settings);
+            _profileManager.ProfileChanged += ProfileManager_ProfileChanged;
+            _profileManager.StartAutoSwitching();
+            
             LoadShortcuts();
             LoadClipboardShortcuts();
             RegisterAllHotkeys();
             
             _startWithWindowsCheckBox.Checked = _settings.StartWithWindows;
+            
+            // Apply theme
+            ApplyTheme();
             
             SetupTrayIcon();
         }
@@ -317,102 +332,259 @@ namespace QuickLauncher
             _hotkeyManager?.UnregisterAll();
             _hotkeyIdToShortcut.Clear();
             _hotkeyIdToClipboardShortcut.Clear();
-
-            foreach (var shortcut in _settings.Shortcuts)
+            
+            Logger.Info("Registering hotkeys");
+            
+            // Register command palette hotkey if configured
+            if (_settings.CommandPaletteHotkeyModifiers != 0 && _settings.CommandPaletteHotkeyKeyCode != 0)
             {
+                _commandPaletteHotkeyId = _hotkeyManager!.RegisterHotkey(
+                    (uint)_settings.CommandPaletteHotkeyModifiers,
+                    (uint)_settings.CommandPaletteHotkeyKeyCode);
+                    
+                if (_commandPaletteHotkeyId != -1)
+                {
+                    Logger.Info($"Command palette hotkey registered: {_settings.CommandPaletteHotkey}");
+                }
+            }
+
+            foreach (var shortcut in _settings.Shortcuts.Where(s => s.IsEnabled))
+            {
+                // Check if shortcut is enabled in current profile
+                if (_profileManager != null && !_profileManager.IsShortcutEnabledInActiveProfile(shortcut.Id))
+                    continue;
+                    
                 int hotkeyId = _hotkeyManager!.RegisterHotkey((uint)shortcut.Modifiers, (uint)shortcut.KeyCode);
                 if (hotkeyId != -1)
                 {
                     _hotkeyIdToShortcut[hotkeyId] = shortcut;
+                    Logger.Debug($"Registered hotkey for {shortcut.Name}: {shortcut.KeyDisplayName}");
+                }
+                else
+                {
+                    Logger.Warning($"Failed to register hotkey for {shortcut.Name}: {shortcut.KeyDisplayName}");
                 }
             }
 
-            foreach (var clipboardShortcut in _settings.ClipboardShortcuts)
+            foreach (var clipboardShortcut in _settings.ClipboardShortcuts.Where(c => c.IsEnabled))
             {
+                // Check if shortcut is enabled in current profile
+                if (_profileManager != null && !_profileManager.IsClipboardShortcutEnabledInActiveProfile(clipboardShortcut.Id))
+                    continue;
+                    
                 int hotkeyId = _hotkeyManager!.RegisterHotkey((uint)clipboardShortcut.Modifiers, (uint)clipboardShortcut.KeyCode);
                 if (hotkeyId != -1)
                 {
                     _hotkeyIdToClipboardShortcut[hotkeyId] = clipboardShortcut;
+                    Logger.Debug($"Registered hotkey for {clipboardShortcut.Name}: {clipboardShortcut.KeyDisplayName}");
+                }
+                else
+                {
+                    Logger.Warning($"Failed to register hotkey for {clipboardShortcut.Name}: {clipboardShortcut.KeyDisplayName}");
                 }
             }
+            
+            Logger.Info($"Registered {_hotkeyIdToShortcut.Count} app shortcuts and {_hotkeyIdToClipboardShortcut.Count} clipboard shortcuts");
         }
 
-        protected override void WndProc(ref Message m)
+
+        private async void LaunchApplication(AppShortcut shortcut)
         {
-            if (m.Msg == HotkeyManager.WM_HOTKEY)
+            Logger.Info($"Launching shortcut: {shortcut.Name}");
+            
+            if (!shortcut.IsEnabled)
             {
-                int hotkeyId = m.WParam.ToInt32();
-                if (_hotkeyIdToShortcut.TryGetValue(hotkeyId, out AppShortcut? shortcut))
-                {
-                    LaunchApplication(shortcut);
-                }
-                else if (_hotkeyIdToClipboardShortcut.TryGetValue(hotkeyId, out ClipboardShortcut? clipboardShortcut))
-                {
-                    PasteText(clipboardShortcut);
-                }
+                Logger.Warning($"Shortcut {shortcut.Name} is disabled");
+                return;
             }
-            base.WndProc(ref m);
-        }
-
-        private void LaunchApplication(AppShortcut shortcut)
-        {
-            for (int i = 0; i < shortcut.Apps.Count; i++)
+            
+            // Check if enabled in active profile
+            if (_profileManager != null && !_profileManager.IsShortcutEnabledInActiveProfile(shortcut.Id))
             {
-                var app = shortcut.Apps[i];
-                try
+                Logger.Info($"Shortcut {shortcut.Name} not enabled in active profile");
+                if (_settings.ShowNotifications)
+                    ToastNotification.Show($"{shortcut.Name} is not available in current profile");
+                return;
+            }
+            
+            if (shortcut.LaunchInParallel)
+            {
+                // Launch all apps simultaneously
+                var tasks = shortcut.Apps.Select(app => System.Threading.Tasks.Task.Run(() => LaunchSingleApp(app, shortcut)));
+                await System.Threading.Tasks.Task.WhenAll(tasks);
+            }
+            else
+            {
+                // Launch apps sequentially
+                for (int i = 0; i < shortcut.Apps.Count; i++)
                 {
-                    if (File.Exists(app.ExePath))
+                    var app = shortcut.Apps[i];
+                    await LaunchSingleApp(app, shortcut);
+                    
+                    // Add delay between launches (except after the last app)
+                    if (i < shortcut.Apps.Count - 1)
                     {
-                        var startInfo = new ProcessStartInfo
-                        {
-                            FileName = app.ExePath,
-                            Arguments = app.Arguments ?? "",
-                            UseShellExecute = true
-                        };
-                        
-                        if (app.RunAsAdmin)
-                        {
-                            startInfo.Verb = "runas";
-                        }
-                        
-                        Process.Start(startInfo);
-                        
-                        // Add delay between launches (except after the last app)
-                        if (i < shortcut.Apps.Count - 1 && shortcut.LaunchDelay > 0)
-                        {
-                            System.Threading.Thread.Sleep(shortcut.LaunchDelay);
-                        }
-                    }
-                    else
-                    {
-                        MessageBox.Show($"Application not found: {app.ExePath}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        await ApplyDelay(app, shortcut);
                     }
                 }
-                catch (Exception ex)
-                {
-                    MessageBox.Show($"Error launching application {app.ExePath}: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
             }
+            
+            if (_settings.ShowNotifications)
+                ToastNotification.Show($"Launched: {shortcut.Name}", 1500);
         }
-
-        private void PasteText(ClipboardShortcut clipboardShortcut)
+        
+        private async System.Threading.Tasks.Task LaunchSingleApp(AppInfo app, AppShortcut shortcut)
         {
             try
             {
-                // Set the text to clipboard
-                Clipboard.SetText(clipboardShortcut.Content);
+                string processName = Path.GetFileNameWithoutExtension(app.ExePath);
                 
-                // Small delay to ensure clipboard is set
-                System.Threading.Thread.Sleep(50);
+                // Check launch conditions
+                if (!CheckLaunchConditions(app.LaunchCondition))
+                {
+                    Logger.Info($"Launch conditions not met for {processName}");
+                    return;
+                }
                 
-                // Simulate Ctrl+V to paste
-                SendKeys.SendWait("^v");
+                // Handle smart launching behavior
+                if (app.LaunchCondition.CheckIfRunning && WindowManager.IsProcessRunning(processName))
+                {
+                    switch (app.LaunchCondition.Behavior)
+                    {
+                        case LaunchBehavior.LaunchIfNotRunning:
+                            Logger.Info($"{processName} already running, skipping launch");
+                            return;
+                            
+                        case LaunchBehavior.BringToFrontIfRunning:
+                            Logger.Info($"Bringing {processName} to front");
+                            WindowManager.BringProcessToFront(processName);
+                            return;
+                    }
+                }
+                
+                if (!File.Exists(app.ExePath))
+                {
+                    string error = $"Application not found: {app.ExePath}";
+                    Logger.Error(error);
+                    MessageBox.Show(error, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+                
+                var startInfo = new ProcessStartInfo
+                {
+                    FileName = app.ExePath,
+                    Arguments = app.Arguments ?? "",
+                    UseShellExecute = true
+                };
+                
+                if (app.RunAsAdmin)
+                {
+                    startInfo.Verb = "runas";
+                }
+                
+                Process? process = Process.Start(startInfo);
+                Logger.Info($"Started {processName}");
+                
+                // Apply window positioning if configured
+                if (process != null && app.WindowLayout != null)
+                {
+                    // Wait for window to appear
+                    await System.Threading.Tasks.Task.Delay(500);
+                    await WindowManager.WaitForWindow(processName, 5000);
+                    
+                    if (process.HasExited == false)
+                    {
+                        WindowManager.PositionWindow(process, app.WindowLayout);
+                    }
+                }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error pasting text: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                string error = $"Error launching {app.ExePath}: {ex.Message}";
+                Logger.Error(error, ex);
+                MessageBox.Show(error, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
+        
+        private async System.Threading.Tasks.Task ApplyDelay(AppInfo app, AppShortcut shortcut)
+        {
+            if (shortcut.DelayType == DelayType.Fixed && shortcut.LaunchDelay > 0)
+            {
+                await System.Threading.Tasks.Task.Delay(shortcut.LaunchDelay);
+            }
+            else if (shortcut.DelayType == DelayType.WaitForProcess)
+            {
+                string processName = Path.GetFileNameWithoutExtension(app.ExePath);
+                await WindowManager.WaitForProcess(processName, shortcut.MaxWaitTime);
+            }
+            else if (shortcut.DelayType == DelayType.WaitForWindow)
+            {
+                string processName = Path.GetFileNameWithoutExtension(app.ExePath);
+                await WindowManager.WaitForWindow(processName, shortcut.MaxWaitTime);
+            }
+            else if (shortcut.DelayType == DelayType.WaitForNetwork)
+            {
+                int elapsed = 0;
+                int pollInterval = 500;
+                while (elapsed < shortcut.MaxWaitTime)
+                {
+                    if (System.Net.NetworkInformation.NetworkInterface.GetIsNetworkAvailable())
+                        break;
+                    await System.Threading.Tasks.Task.Delay(pollInterval);
+                    elapsed += pollInterval;
+                }
+            }
+        }
+        
+        private bool CheckLaunchConditions(LaunchCondition condition)
+        {
+            // Check network requirement
+            if (condition.RequireNetwork)
+            {
+                if (!System.Net.NetworkInformation.NetworkInterface.GetIsNetworkAvailable())
+                {
+                    Logger.Warning("Network not available, launch condition not met");
+                    return false;
+                }
+            }
+            
+            // Check battery level
+            if (condition.MinBatteryLevel.HasValue)
+            {
+                PowerStatus powerStatus = SystemInformation.PowerStatus;
+                float batteryPercent = powerStatus.BatteryLifePercent * 100;
+                if (batteryPercent < condition.MinBatteryLevel.Value)
+                {
+                    Logger.Warning($"Battery level {batteryPercent}% below minimum {condition.MinBatteryLevel.Value}%");
+                    return false;
+                }
+            }
+            
+            // Check AC power requirement
+            if (condition.RequireAC)
+            {
+                PowerStatus powerStatus = SystemInformation.PowerStatus;
+                if (powerStatus.PowerLineStatus != PowerLineStatus.Online)
+                {
+                    Logger.Warning("AC power not connected, launch condition not met");
+                    return false;
+                }
+            }
+            
+            // Check required process
+            if (!string.IsNullOrWhiteSpace(condition.RequiredProcess))
+            {
+                bool isRunning = WindowManager.IsProcessRunning(condition.RequiredProcess);
+                if (isRunning != condition.RequiredProcessMustBeRunning)
+                {
+                    Logger.Warning($"Required process condition not met for {condition.RequiredProcess}");
+                    return false;
+                }
+            }
+            
+            return true;
+        }
+
 
         private void AddButton_Click(object? sender, EventArgs e)
         {
@@ -638,13 +810,191 @@ namespace QuickLauncher
             }
         }
 
+        private void PasteText(ClipboardShortcut clipboardShortcut)
+        {
+            try
+            {
+                Logger.Info($"Pasting: {clipboardShortcut.Name}");
+                
+                if (!clipboardShortcut.IsEnabled)
+                {
+                    Logger.Warning($"Clipboard shortcut {clipboardShortcut.Name} is disabled");
+                    return;
+                }
+                
+                // Check if enabled in active profile
+                if (_profileManager != null && !_profileManager.IsClipboardShortcutEnabledInActiveProfile(clipboardShortcut.Id))
+                {
+                    Logger.Info($"Clipboard shortcut {clipboardShortcut.Name} not enabled in active profile");
+                    if (_settings.ShowNotifications)
+                        ToastNotification.Show($"{clipboardShortcut.Name} is not available in current profile");
+                    return;
+                }
+                
+                string content = clipboardShortcut.Content;
+                
+                // Process template variables if enabled
+                if (clipboardShortcut.UseTemplateVariables)
+                {
+                    content = TemplateProcessor.ProcessTemplate(content);
+                }
+                
+                // Handle alternative contents (cycling)
+                if (clipboardShortcut.AlternativeContents.Count > 0)
+                {
+                    int index = clipboardShortcut.CurrentAlternativeIndex % (clipboardShortcut.AlternativeContents.Count + 1);
+                    if (index > 0)
+                    {
+                        content = clipboardShortcut.AlternativeContents[index - 1];
+                        if (clipboardShortcut.UseTemplateVariables)
+                        {
+                            content = TemplateProcessor.ProcessTemplate(content);
+                        }
+                    }
+                    
+                    // Update cycle index for next time
+                    clipboardShortcut.CurrentAlternativeIndex = (index + 1) % (clipboardShortcut.AlternativeContents.Count + 1);
+                    SettingsManager.SaveSettings(_settings);
+                }
+                
+                // Set the text to clipboard
+                if (clipboardShortcut.PreserveFormatting)
+                {
+                    // For HTML/Rich text, we'd need DataObject - for now just set as text
+                    Clipboard.SetText(content, TextDataFormat.UnicodeText);
+                }
+                else
+                {
+                    Clipboard.SetText(content);
+                }
+                
+                // Small delay to ensure clipboard is set
+                System.Threading.Thread.Sleep(50);
+                
+                // Simulate Ctrl+V to paste
+                SendKeys.SendWait("^v");
+                
+                if (_settings.ShowNotifications)
+                    ToastNotification.Show($"Pasted: {clipboardShortcut.Name}", 1500);
+            }
+            catch (Exception ex)
+            {
+                string error = $"Error pasting text: {ex.Message}";
+                Logger.Error(error, ex);
+                MessageBox.Show(error, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+        
+        protected override void WndProc(ref Message m)
+        {
+            if (m.Msg == HotkeyManager.WM_HOTKEY)
+            {
+                int hotkeyId = m.WParam.ToInt32();
+                
+                // Check if it's the command palette hotkey
+                if (hotkeyId == _commandPaletteHotkeyId)
+                {
+                    ShowCommandPalette();
+                }
+                else if (_hotkeyIdToShortcut.TryGetValue(hotkeyId, out AppShortcut? shortcut))
+                {
+                    LaunchApplication(shortcut);
+                }
+                else if (_hotkeyIdToClipboardShortcut.TryGetValue(hotkeyId, out ClipboardShortcut? clipboardShortcut))
+                {
+                    PasteText(clipboardShortcut);
+                }
+            }
+            base.WndProc(ref m);
+        }
+        
+        private void ShowCommandPalette()
+        {
+            try
+            {
+                using (var palette = new CommandPalette(_settings))
+                {
+                    if (palette.ShowDialog() == DialogResult.OK)
+                    {
+                        if (palette.SelectedAppShortcut != null)
+                        {
+                            LaunchApplication(palette.SelectedAppShortcut);
+                        }
+                        else if (palette.SelectedClipboardShortcut != null)
+                        {
+                            PasteText(palette.SelectedClipboardShortcut);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Error("Error showing command palette", ex);
+            }
+        }
+        
+        private void ProfileManager_ProfileChanged(object? sender, ProfileChangedEventArgs e)
+        {
+            Logger.Info($"Profile changed to: {e.NewProfile?.Name ?? "None"}");
+            
+            // Reload shortcuts to reflect profile changes
+            LoadShortcuts();
+            LoadClipboardShortcuts();
+            RegisterAllHotkeys();
+            
+            if (_settings.ShowNotifications)
+            {
+                ToastNotification.Show($"Switched to profile: {e.NewProfile?.Name ?? "Default"}", 2000);
+            }
+        }
+        
+        private void ApplyTheme()
+        {
+            if (_settings.DarkMode)
+            {
+                // Apply dark theme
+                this.BackColor = Color.FromArgb(30, 30, 30);
+                this.ForeColor = Color.White;
+                
+                _tabControl.BackColor = Color.FromArgb(37, 37, 38);
+                _tabControl.ForeColor = Color.White;
+                
+                _shortcutsListView.BackColor = Color.FromArgb(37, 37, 38);
+                _shortcutsListView.ForeColor = Color.White;
+                
+                _clipboardShortcutsListView.BackColor = Color.FromArgb(37, 37, 38);
+                _clipboardShortcutsListView.ForeColor = Color.White;
+                
+                foreach (Control control in this.Controls)
+                {
+                    if (control is Button button)
+                    {
+                        button.BackColor = Color.FromArgb(45, 45, 48);
+                        button.ForeColor = Color.White;
+                        button.FlatStyle = FlatStyle.Flat;
+                        button.FlatAppearance.BorderColor = Color.FromArgb(63, 63, 70);
+                    }
+                    else if (control is CheckBox checkbox)
+                    {
+                        checkbox.ForeColor = Color.White;
+                    }
+                    else if (control is Label label)
+                    {
+                        label.ForeColor = Color.FromArgb(180, 180, 180);
+                    }
+                }
+            }
+        }
+        
         protected override void Dispose(bool disposing)
         {
             if (disposing)
             {
+                _profileManager?.StopAutoSwitching();
                 _trayIcon?.Dispose();
                 _trayMenu?.Dispose();
                 _iconImageList?.Dispose();
+                Logger.Info("QuickLauncher closed");
             }
             base.Dispose(disposing);
         }
