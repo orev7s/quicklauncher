@@ -50,9 +50,9 @@ namespace QuickLauncher
         private void InitializeComponent()
         {
             this.Text = "QuickLauncher - Global Shortcuts";
-            this.Size = new Size(700, 500);
+            this.Size = new Size(700, 550);
             this.StartPosition = FormStartPosition.CenterScreen;
-            this.MinimumSize = new Size(600, 400);
+            this.MinimumSize = new Size(700, 550);
             this.FormClosing += MainForm_FormClosing;
 
             // TabControl
@@ -118,8 +118,10 @@ namespace QuickLauncher
             {
                 Text = "Add Shortcut",
                 Location = new Point(10, 410),
-                Size = new Size(100, 30),
-                Anchor = AnchorStyles.Bottom | AnchorStyles.Left
+                Size = new Size(120, 35),
+                Anchor = AnchorStyles.Bottom | AnchorStyles.Left,
+                Font = new Font("Segoe UI", 10F, FontStyle.Regular),
+                FlatStyle = FlatStyle.System
             };
             _addButton.Click += AddButton_Click;
             this.Controls.Add(_addButton);
@@ -127,9 +129,11 @@ namespace QuickLauncher
             _editButton = new Button
             {
                 Text = "Edit",
-                Location = new Point(120, 410),
-                Size = new Size(100, 30),
-                Anchor = AnchorStyles.Bottom | AnchorStyles.Left
+                Location = new Point(140, 410),
+                Size = new Size(90, 35),
+                Anchor = AnchorStyles.Bottom | AnchorStyles.Left,
+                Font = new Font("Segoe UI", 10F, FontStyle.Regular),
+                FlatStyle = FlatStyle.System
             };
             _editButton.Click += EditButton_Click;
             this.Controls.Add(_editButton);
@@ -137,9 +141,11 @@ namespace QuickLauncher
             _removeButton = new Button
             {
                 Text = "Remove",
-                Location = new Point(230, 410),
-                Size = new Size(100, 30),
-                Anchor = AnchorStyles.Bottom | AnchorStyles.Left
+                Location = new Point(240, 410),
+                Size = new Size(90, 35),
+                Anchor = AnchorStyles.Bottom | AnchorStyles.Left,
+                Font = new Font("Segoe UI", 10F, FontStyle.Regular),
+                FlatStyle = FlatStyle.System
             };
             _removeButton.Click += RemoveButton_Click;
             this.Controls.Add(_removeButton);
@@ -147,9 +153,11 @@ namespace QuickLauncher
             _importButton = new Button
             {
                 Text = "Import...",
-                Location = new Point(350, 410),
-                Size = new Size(100, 30),
-                Anchor = AnchorStyles.Bottom | AnchorStyles.Left
+                Location = new Point(430, 410),
+                Size = new Size(110, 35),
+                Anchor = AnchorStyles.Bottom | AnchorStyles.Left,
+                Font = new Font("Segoe UI", 10F, FontStyle.Regular),
+                FlatStyle = FlatStyle.System
             };
             _importButton.Click += ImportButton_Click;
             this.Controls.Add(_importButton);
@@ -157,9 +165,11 @@ namespace QuickLauncher
             _exportButton = new Button
             {
                 Text = "Export...",
-                Location = new Point(460, 410),
-                Size = new Size(100, 30),
-                Anchor = AnchorStyles.Bottom | AnchorStyles.Left
+                Location = new Point(550, 410),
+                Size = new Size(110, 35),
+                Anchor = AnchorStyles.Bottom | AnchorStyles.Left,
+                Font = new Font("Segoe UI", 10F, FontStyle.Regular),
+                FlatStyle = FlatStyle.System
             };
             _exportButton.Click += ExportButton_Click;
             this.Controls.Add(_exportButton);
@@ -171,9 +181,10 @@ namespace QuickLauncher
             _startWithWindowsCheckBox = new CheckBox
             {
                 Text = "Start with Windows",
-                Location = new Point(10, 410),
+                Location = new Point(10, 455),
                 Size = new Size(200, 25),
-                Anchor = AnchorStyles.Bottom | AnchorStyles.Left
+                Anchor = AnchorStyles.Bottom | AnchorStyles.Left,
+                Font = new Font("Segoe UI", 9.5F, FontStyle.Regular)
             };
             _startWithWindowsCheckBox.CheckedChanged += StartWithWindowsCheckBox_CheckedChanged;
             this.Controls.Add(_startWithWindowsCheckBox);
@@ -182,9 +193,11 @@ namespace QuickLauncher
             Label infoLabel = new Label
             {
                 Text = "Create global keyboard shortcuts to launch apps or paste text. All shortcuts work system-wide.",
-                Location = new Point(10, 440),
+                Location = new Point(10, 485),
                 Size = new Size(660, 20),
-                Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right
+                Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right,
+                Font = new Font("Segoe UI", 9F, FontStyle.Regular),
+                ForeColor = Color.Gray
             };
             this.Controls.Add(infoLabel);
         }
