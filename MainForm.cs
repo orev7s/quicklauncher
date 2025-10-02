@@ -120,8 +120,8 @@ namespace QuickLauncher
                 Location = new Point(10, 410),
                 Size = new Size(120, 35),
                 Anchor = AnchorStyles.Bottom | AnchorStyles.Left,
-                Font = new Font("Segoe UI", 10F, FontStyle.Regular),
-                FlatStyle = FlatStyle.System
+                Font = new Font("Segoe UI", 9.5F, FontStyle.Regular),
+                UseVisualStyleBackColor = true
             };
             _addButton.Click += AddButton_Click;
             this.Controls.Add(_addButton);
@@ -132,8 +132,8 @@ namespace QuickLauncher
                 Location = new Point(140, 410),
                 Size = new Size(90, 35),
                 Anchor = AnchorStyles.Bottom | AnchorStyles.Left,
-                Font = new Font("Segoe UI", 10F, FontStyle.Regular),
-                FlatStyle = FlatStyle.System
+                Font = new Font("Segoe UI", 9.5F, FontStyle.Regular),
+                UseVisualStyleBackColor = true
             };
             _editButton.Click += EditButton_Click;
             this.Controls.Add(_editButton);
@@ -144,8 +144,8 @@ namespace QuickLauncher
                 Location = new Point(240, 410),
                 Size = new Size(90, 35),
                 Anchor = AnchorStyles.Bottom | AnchorStyles.Left,
-                Font = new Font("Segoe UI", 10F, FontStyle.Regular),
-                FlatStyle = FlatStyle.System
+                Font = new Font("Segoe UI", 9.5F, FontStyle.Regular),
+                UseVisualStyleBackColor = true
             };
             _removeButton.Click += RemoveButton_Click;
             this.Controls.Add(_removeButton);
@@ -156,8 +156,8 @@ namespace QuickLauncher
                 Location = new Point(430, 410),
                 Size = new Size(110, 35),
                 Anchor = AnchorStyles.Bottom | AnchorStyles.Left,
-                Font = new Font("Segoe UI", 10F, FontStyle.Regular),
-                FlatStyle = FlatStyle.System
+                Font = new Font("Segoe UI", 9.5F, FontStyle.Regular),
+                UseVisualStyleBackColor = true
             };
             _importButton.Click += ImportButton_Click;
             this.Controls.Add(_importButton);
@@ -168,14 +168,11 @@ namespace QuickLauncher
                 Location = new Point(550, 410),
                 Size = new Size(110, 35),
                 Anchor = AnchorStyles.Bottom | AnchorStyles.Left,
-                Font = new Font("Segoe UI", 10F, FontStyle.Regular),
-                FlatStyle = FlatStyle.System
+                Font = new Font("Segoe UI", 9.5F, FontStyle.Regular),
+                UseVisualStyleBackColor = true
             };
             _exportButton.Click += ExportButton_Click;
             this.Controls.Add(_exportButton);
-
-            // Initially show app shortcut buttons
-            UpdateButtonVisibility();
 
             // Settings
             _startWithWindowsCheckBox = new CheckBox
@@ -200,6 +197,9 @@ namespace QuickLauncher
                 ForeColor = Color.Gray
             };
             this.Controls.Add(infoLabel);
+            
+            // Initialize button visibility after all controls are added
+            UpdateButtonVisibility();
         }
 
         private void SetupTrayIcon()
@@ -541,27 +541,25 @@ namespace QuickLauncher
         {
             bool isAppShortcutsTab = _tabControl.SelectedIndex == 0;
 
-            // App shortcut buttons visible only on app shortcuts tab
-            _addButton.Visible = isAppShortcutsTab;
-            _editButton.Visible = isAppShortcutsTab;
-            _removeButton.Visible = isAppShortcutsTab;
-            _importButton.Visible = isAppShortcutsTab;
-            _exportButton.Visible = isAppShortcutsTab;
-
-            // Update button text/function for paste shortcuts tab
-            if (!isAppShortcutsTab)
+            if (isAppShortcutsTab)
             {
-                // Show different buttons for paste shortcuts
+                // App Shortcuts tab
+                _addButton.Text = "Add Shortcut";
+                _addButton.Visible = true;
+                _editButton.Visible = true;
+                _removeButton.Visible = true;
+                _importButton.Visible = true;
+                _exportButton.Visible = true;
+            }
+            else
+            {
+                // Paste Shortcuts tab
                 _addButton.Text = "Add Paste Shortcut";
                 _addButton.Visible = true;
                 _editButton.Visible = true;
                 _removeButton.Visible = true;
                 _importButton.Visible = false;
                 _exportButton.Visible = false;
-            }
-            else
-            {
-                _addButton.Text = "Add Shortcut";
             }
         }
 
