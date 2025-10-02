@@ -84,6 +84,9 @@ A lightweight Windows application that allows you to launch single or multiple a
 
 ## Screenshots
 
+<img width="693" height="551" alt="{DD83BFA3-E8FE-4839-A8CA-D0DDE777E678}" src="https://github.com/user-attachments/assets/f56b08bc-878a-4019-a659-6d653714bbc5" />
+
+
 ### Main Interface
 The main window displays all your configured shortcuts with their assigned hotkeys.
 
