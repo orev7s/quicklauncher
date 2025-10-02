@@ -8,6 +8,7 @@ A lightweight Windows application that allows you to launch single or multiple a
 
 ## Features
 
+### App Shortcuts
 ✨ **Global Keyboard Shortcuts** - Launch applications from anywhere with customizable hotkeys  
 🚀 **Multiple Apps Per Shortcut** - Launch several applications at once with a single keypress  
 🎯 **Custom Naming** - Name your shortcuts like "Development Apps", "Games", etc.  
@@ -15,6 +16,14 @@ A lightweight Windows application that allows you to launch single or multiple a
 ⚙️ **Command-Line Arguments** - Pass custom arguments to each application  
 🛡️ **Run as Administrator** - Launch apps with elevated privileges when needed  
 ⏱️ **Launch Delay** - Configure delay between launching multiple apps  
+
+### Paste Shortcuts
+📋 **Instant Text Pasting** - Paste predefined text snippets with a keyboard shortcut  
+✍️ **Multi-line Support** - Store and paste prompts, emails, code snippets, recipes, and more  
+⚡ **Quick Access** - Skip clipboard managers and paste directly with your custom hotkey  
+🔖 **Organized Templates** - Keep frequently used text organized and ready to paste  
+
+### General Features
 🔍 **Hotkey Conflict Detection** - Warns when hotkeys conflict with existing shortcuts  
 📤 **Import/Export** - Share or backup your shortcuts configuration  
 💾 **Persistent Settings** - Your shortcuts are automatically saved and loaded  
@@ -56,7 +65,7 @@ dotnet run -c Release
 
 ## Usage
 
-### Creating a Shortcut
+### Creating an App Shortcut
 
 1. Click **"Add Shortcut"** in the main window
 2. Enter a **name** for your shortcut (e.g., "Development Apps", "Games")
@@ -68,8 +77,18 @@ dotnet run -c Release
 6. Click in the **Shortcut** field and press your desired key combination (e.g., `Ctrl+Alt+D`)
 7. Click **OK** to save
 
+### Creating a Paste Shortcut
+
+1. Switch to the **"Paste Shortcuts"** tab
+2. Click **"Add Paste Shortcut"**
+3. Enter a **name** for your shortcut (e.g., "Email Signature", "Code Template")
+4. Type or paste the **content** you want to paste (supports multiple lines)
+5. Click in the **Shortcut** field and press your desired key combination (e.g., `Ctrl+Alt+E`)
+6. Click **OK** to save
+
 ### Example Use Cases
 
+#### App Shortcuts
 **Development Environment**
 - Name: "Dev Apps"
 - Apps: Visual Studio Code, Chrome, Postman, Docker Desktop
@@ -85,14 +104,41 @@ dotnet run -c Release
 - Apps: Outlook, Teams, Excel, Chrome
 - Hotkey: `Ctrl+Alt+W`
 
+#### Paste Shortcuts
+**Email Signature**
+- Name: "Email Signature"
+- Content: Your full email signature with contact info
+- Hotkey: `Ctrl+Alt+S`
+
+**Code Snippet**
+- Name: "React Component"
+- Content: Your frequently used React component template
+- Hotkey: `Ctrl+Alt+R`
+
+**Customer Response**
+- Name: "Thank You Reply"
+- Content: Professional thank you message template
+- Hotkey: `Ctrl+Alt+T`
+
+**Recipe Instructions**
+- Name: "Favorite Recipe"
+- Content: Step-by-step cooking instructions
+- Hotkey: `Ctrl+Alt+F`
+
 ### Managing Shortcuts
 
+#### App Shortcuts Tab
 - **Edit**: Select a shortcut and click "Edit" or double-click it
   - Click "Edit..." button next to an app to modify its arguments or admin settings
 - **Remove**: Select a shortcut and click "Remove"
 - **Launch**: Press the assigned hotkey from anywhere in Windows
 - **Import**: Load shortcuts from a JSON file
 - **Export**: Save your shortcuts to share or backup
+
+#### Paste Shortcuts Tab
+- **Edit**: Select a paste shortcut and click "Edit" or double-click it
+- **Remove**: Select a paste shortcut and click "Remove"
+- **Paste**: Press the assigned hotkey from anywhere in Windows to instantly paste the text
 
 ### Settings
 
@@ -231,11 +277,13 @@ If you encounter any issues or have questions:
 - [x] Hotkey conflict detection
 - [x] Delay between launching multiple apps
 - [x] Run applications as administrator option
+- [x] Paste shortcuts for instant text pasting
 - [ ] Dark mode theme
 - [ ] Profiles for different work contexts
 - [ ] Application window positioning
 - [ ] Startup delay for individual apps
-- [ ] Hotkey recording/playback
+- [ ] Import/Export for paste shortcuts separately
+- [ ] Rich text format support for paste shortcuts
 
 ---
 

@@ -13,8 +13,10 @@ namespace QuickLauncher
         private Settings _settings;
         private HotkeyManager? _hotkeyManager;
         private Dictionary<int, AppShortcut> _hotkeyIdToShortcut = new Dictionary<int, AppShortcut>();
+        private Dictionary<int, ClipboardShortcut> _hotkeyIdToClipboardShortcut = new Dictionary<int, ClipboardShortcut>();
 
         // UI Controls
+        private TabControl _tabControl;
         private ListView _shortcutsListView;
         private ImageList _iconImageList;
         private Button _addButton;
@@ -22,6 +24,10 @@ namespace QuickLauncher
         private Button _removeButton;
         private Button _importButton;
         private Button _exportButton;
+        private ListView _clipboardShortcutsListView;
+        private Button _addClipboardButton;
+        private Button _editClipboardButton;
+        private Button _removeClipboardButton;
         private CheckBox _startWithWindowsCheckBox;
         private NotifyIcon _trayIcon;
         private ContextMenuStrip _trayMenu;
@@ -33,6 +39,7 @@ namespace QuickLauncher
             _hotkeyManager = new HotkeyManager(this.Handle);
             
             LoadShortcuts();
+            LoadClipboardShortcuts();
             RegisterAllHotkeys();
             
             _startWithWindowsCheckBox.Checked = _settings.StartWithWindows;
@@ -42,11 +49,24 @@ namespace QuickLauncher
 
         private void InitializeComponent()
         {
-            this.Text = "QuickLauncher - Global App Shortcuts";
+            this.Text = "QuickLauncher - Global Shortcuts";
             this.Size = new Size(700, 500);
             this.StartPosition = FormStartPosition.CenterScreen;
             this.MinimumSize = new Size(600, 400);
             this.FormClosing += MainForm_FormClosing;
+
+            // TabControl
+            _tabControl = new TabControl
+            {
+                Location = new Point(10, 10),
+                Size = new Size(660, 390),
+                Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right
+            };
+            this.Controls.Add(_tabControl);
+
+            // Tab 1: App Shortcuts
+            TabPage appShortcutsTab = new TabPage("App Shortcuts");
+            _tabControl.TabPages.Add(appShortcutsTab);
 
             // ImageList for icons
             _iconImageList = new ImageList
@@ -55,11 +75,11 @@ namespace QuickLauncher
                 ColorDepth = ColorDepth.Depth32Bit
             };
 
-            // ListView for shortcuts
+            // ListView for app shortcuts
             _shortcutsListView = new ListView
             {
                 Location = new Point(10, 10),
-                Size = new Size(660, 350),
+                Size = new Size(630, 270),
                 View = View.Details,
                 FullRowSelect = true,
                 GridLines = true,
@@ -70,58 +90,109 @@ namespace QuickLauncher
             _shortcutsListView.Columns.Add("Applications", 350);
             _shortcutsListView.Columns.Add("Shortcut", 120);
             _shortcutsListView.DoubleClick += EditButton_Click;
-            this.Controls.Add(_shortcutsListView);
+            appShortcutsTab.Controls.Add(_shortcutsListView);
 
-            // Buttons
+            // App Shortcuts Buttons
             _addButton = new Button
             {
                 Text = "Add Shortcut",
-                Location = new Point(10, 370),
+                Location = new Point(10, 290),
                 Size = new Size(100, 30),
                 Anchor = AnchorStyles.Bottom | AnchorStyles.Left
             };
             _addButton.Click += AddButton_Click;
-            this.Controls.Add(_addButton);
+            appShortcutsTab.Controls.Add(_addButton);
 
             _editButton = new Button
             {
                 Text = "Edit",
-                Location = new Point(120, 370),
+                Location = new Point(120, 290),
                 Size = new Size(100, 30),
                 Anchor = AnchorStyles.Bottom | AnchorStyles.Left
             };
             _editButton.Click += EditButton_Click;
-            this.Controls.Add(_editButton);
+            appShortcutsTab.Controls.Add(_editButton);
 
             _removeButton = new Button
             {
                 Text = "Remove",
-                Location = new Point(230, 370),
+                Location = new Point(230, 290),
                 Size = new Size(100, 30),
                 Anchor = AnchorStyles.Bottom | AnchorStyles.Left
             };
             _removeButton.Click += RemoveButton_Click;
-            this.Controls.Add(_removeButton);
+            appShortcutsTab.Controls.Add(_removeButton);
 
             _importButton = new Button
             {
                 Text = "Import...",
-                Location = new Point(350, 370),
+                Location = new Point(350, 290),
                 Size = new Size(100, 30),
                 Anchor = AnchorStyles.Bottom | AnchorStyles.Left
             };
             _importButton.Click += ImportButton_Click;
-            this.Controls.Add(_importButton);
+            appShortcutsTab.Controls.Add(_importButton);
 
             _exportButton = new Button
             {
                 Text = "Export...",
-                Location = new Point(460, 370),
+                Location = new Point(460, 290),
                 Size = new Size(100, 30),
                 Anchor = AnchorStyles.Bottom | AnchorStyles.Left
             };
             _exportButton.Click += ExportButton_Click;
-            this.Controls.Add(_exportButton);
+            appShortcutsTab.Controls.Add(_exportButton);
+
+            // Tab 2: Paste Shortcuts
+            TabPage pasteShortcutsTab = new TabPage("Paste Shortcuts");
+            _tabControl.TabPages.Add(pasteShortcutsTab);
+
+            // ListView for clipboard shortcuts
+            _clipboardShortcutsListView = new ListView
+            {
+                Location = new Point(10, 10),
+                Size = new Size(630, 270),
+                View = View.Details,
+                FullRowSelect = true,
+                GridLines = true,
+                Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right
+            };
+            _clipboardShortcutsListView.Columns.Add("Name", 200);
+            _clipboardShortcutsListView.Columns.Add("Content Preview", 300);
+            _clipboardShortcutsListView.Columns.Add("Shortcut", 120);
+            _clipboardShortcutsListView.DoubleClick += EditClipboardButton_Click;
+            pasteShortcutsTab.Controls.Add(_clipboardShortcutsListView);
+
+            // Paste Shortcuts Buttons
+            _addClipboardButton = new Button
+            {
+                Text = "Add Paste Shortcut",
+                Location = new Point(10, 290),
+                Size = new Size(140, 30),
+                Anchor = AnchorStyles.Bottom | AnchorStyles.Left
+            };
+            _addClipboardButton.Click += AddClipboardButton_Click;
+            pasteShortcutsTab.Controls.Add(_addClipboardButton);
+
+            _editClipboardButton = new Button
+            {
+                Text = "Edit",
+                Location = new Point(160, 290),
+                Size = new Size(100, 30),
+                Anchor = AnchorStyles.Bottom | AnchorStyles.Left
+            };
+            _editClipboardButton.Click += EditClipboardButton_Click;
+            pasteShortcutsTab.Controls.Add(_editClipboardButton);
+
+            _removeClipboardButton = new Button
+            {
+                Text = "Remove",
+                Location = new Point(270, 290),
+                Size = new Size(100, 30),
+                Anchor = AnchorStyles.Bottom | AnchorStyles.Left
+            };
+            _removeClipboardButton.Click += RemoveClipboardButton_Click;
+            pasteShortcutsTab.Controls.Add(_removeClipboardButton);
 
             // Settings
             _startWithWindowsCheckBox = new CheckBox
@@ -137,7 +208,7 @@ namespace QuickLauncher
             // Info label
             Label infoLabel = new Label
             {
-                Text = "Add applications with keyboard shortcuts. The shortcuts will work globally.",
+                Text = "Create global keyboard shortcuts to launch apps or paste text. All shortcuts work system-wide.",
                 Location = new Point(10, 440),
                 Size = new Size(660, 20),
                 Anchor = AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right
@@ -226,10 +297,33 @@ namespace QuickLauncher
             }
         }
 
+        private void LoadClipboardShortcuts()
+        {
+            _clipboardShortcutsListView.Items.Clear();
+            
+            foreach (var clipboardShortcut in _settings.ClipboardShortcuts)
+            {
+                string contentPreview = clipboardShortcut.Content.Length > 50 
+                    ? clipboardShortcut.Content.Substring(0, 50).Replace("\r\n", " ").Replace("\n", " ") + "..." 
+                    : clipboardShortcut.Content.Replace("\r\n", " ").Replace("\n", " ");
+                
+                var item = new ListViewItem(new[]
+                {
+                    clipboardShortcut.Name,
+                    contentPreview,
+                    clipboardShortcut.KeyDisplayName
+                });
+                
+                item.Tag = clipboardShortcut;
+                _clipboardShortcutsListView.Items.Add(item);
+            }
+        }
+
         private void RegisterAllHotkeys()
         {
             _hotkeyManager?.UnregisterAll();
             _hotkeyIdToShortcut.Clear();
+            _hotkeyIdToClipboardShortcut.Clear();
 
             foreach (var shortcut in _settings.Shortcuts)
             {
@@ -237,6 +331,15 @@ namespace QuickLauncher
                 if (hotkeyId != -1)
                 {
                     _hotkeyIdToShortcut[hotkeyId] = shortcut;
+                }
+            }
+
+            foreach (var clipboardShortcut in _settings.ClipboardShortcuts)
+            {
+                int hotkeyId = _hotkeyManager!.RegisterHotkey((uint)clipboardShortcut.Modifiers, (uint)clipboardShortcut.KeyCode);
+                if (hotkeyId != -1)
+                {
+                    _hotkeyIdToClipboardShortcut[hotkeyId] = clipboardShortcut;
                 }
             }
         }
@@ -249,6 +352,10 @@ namespace QuickLauncher
                 if (_hotkeyIdToShortcut.TryGetValue(hotkeyId, out AppShortcut? shortcut))
                 {
                     LaunchApplication(shortcut);
+                }
+                else if (_hotkeyIdToClipboardShortcut.TryGetValue(hotkeyId, out ClipboardShortcut? clipboardShortcut))
+                {
+                    PasteText(clipboardShortcut);
                 }
             }
             base.WndProc(ref m);
@@ -292,6 +399,25 @@ namespace QuickLauncher
                 {
                     MessageBox.Show($"Error launching application {app.ExePath}: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
+            }
+        }
+
+        private void PasteText(ClipboardShortcut clipboardShortcut)
+        {
+            try
+            {
+                // Set the text to clipboard
+                Clipboard.SetText(clipboardShortcut.Content);
+                
+                // Small delay to ensure clipboard is set
+                System.Threading.Thread.Sleep(50);
+                
+                // Simulate Ctrl+V to paste
+                SendKeys.SendWait("^v");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error pasting text: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -350,6 +476,65 @@ namespace QuickLauncher
                 _settings.Shortcuts.Remove(shortcut);
                 SettingsManager.SaveSettings(_settings);
                 LoadShortcuts();
+                RegisterAllHotkeys();
+            }
+        }
+
+        private void AddClipboardButton_Click(object? sender, EventArgs e)
+        {
+            using (var dialog = new ClipboardShortcutDialog(null, _settings))
+            {
+                if (dialog.ShowDialog() == DialogResult.OK)
+                {
+                    _settings.ClipboardShortcuts.Add(dialog.Shortcut);
+                    SettingsManager.SaveSettings(_settings);
+                    LoadClipboardShortcuts();
+                    RegisterAllHotkeys();
+                }
+            }
+        }
+
+        private void EditClipboardButton_Click(object? sender, EventArgs e)
+        {
+            if (_clipboardShortcutsListView.SelectedItems.Count == 0)
+            {
+                MessageBox.Show("Please select a paste shortcut to edit.", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            var selectedItem = _clipboardShortcutsListView.SelectedItems[0];
+            var clipboardShortcut = (ClipboardShortcut)selectedItem.Tag!;
+            
+            using (var dialog = new ClipboardShortcutDialog(clipboardShortcut, _settings))
+            {
+                if (dialog.ShowDialog() == DialogResult.OK)
+                {
+                    int index = _settings.ClipboardShortcuts.IndexOf(clipboardShortcut);
+                    _settings.ClipboardShortcuts[index] = dialog.Shortcut;
+                    SettingsManager.SaveSettings(_settings);
+                    LoadClipboardShortcuts();
+                    RegisterAllHotkeys();
+                }
+            }
+        }
+
+        private void RemoveClipboardButton_Click(object? sender, EventArgs e)
+        {
+            if (_clipboardShortcutsListView.SelectedItems.Count == 0)
+            {
+                MessageBox.Show("Please select a paste shortcut to remove.", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            var selectedItem = _clipboardShortcutsListView.SelectedItems[0];
+            var clipboardShortcut = (ClipboardShortcut)selectedItem.Tag!;
+
+            var result = MessageBox.Show($"Are you sure you want to remove '{clipboardShortcut.Name}'?", "Confirm", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+            if (result == DialogResult.Yes)
+            {
+                _settings.ClipboardShortcuts.Remove(clipboardShortcut);
+                SettingsManager.SaveSettings(_settings);
+                LoadClipboardShortcuts();
                 RegisterAllHotkeys();
             }
         }

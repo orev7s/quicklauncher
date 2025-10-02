@@ -8,6 +8,7 @@ namespace QuickLauncher
     public class Settings
     {
         public List<AppShortcut> Shortcuts { get; set; } = new List<AppShortcut>();
+        public List<ClipboardShortcut> ClipboardShortcuts { get; set; } = new List<ClipboardShortcut>();
         public bool StartWithWindows { get; set; } = false;
         public bool MinimizeToTray { get; set; } = true;
     }
