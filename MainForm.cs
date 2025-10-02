@@ -96,7 +96,7 @@ namespace QuickLauncher
             _addButton = new Button
             {
                 Text = "Add Shortcut",
-                Location = new Point(10, 290),
+                Location = new Point(10, 285),
                 Size = new Size(100, 30),
                 Anchor = AnchorStyles.Bottom | AnchorStyles.Left
             };
@@ -106,7 +106,7 @@ namespace QuickLauncher
             _editButton = new Button
             {
                 Text = "Edit",
-                Location = new Point(120, 290),
+                Location = new Point(120, 285),
                 Size = new Size(100, 30),
                 Anchor = AnchorStyles.Bottom | AnchorStyles.Left
             };
@@ -116,7 +116,7 @@ namespace QuickLauncher
             _removeButton = new Button
             {
                 Text = "Remove",
-                Location = new Point(230, 290),
+                Location = new Point(230, 285),
                 Size = new Size(100, 30),
                 Anchor = AnchorStyles.Bottom | AnchorStyles.Left
             };
@@ -126,7 +126,7 @@ namespace QuickLauncher
             _importButton = new Button
             {
                 Text = "Import...",
-                Location = new Point(350, 290),
+                Location = new Point(350, 285),
                 Size = new Size(100, 30),
                 Anchor = AnchorStyles.Bottom | AnchorStyles.Left
             };
@@ -136,7 +136,7 @@ namespace QuickLauncher
             _exportButton = new Button
             {
                 Text = "Export...",
-                Location = new Point(460, 290),
+                Location = new Point(460, 285),
                 Size = new Size(100, 30),
                 Anchor = AnchorStyles.Bottom | AnchorStyles.Left
             };
@@ -167,7 +167,7 @@ namespace QuickLauncher
             _addClipboardButton = new Button
             {
                 Text = "Add Paste Shortcut",
-                Location = new Point(10, 290),
+                Location = new Point(10, 285),
                 Size = new Size(140, 30),
                 Anchor = AnchorStyles.Bottom | AnchorStyles.Left
             };
@@ -177,7 +177,7 @@ namespace QuickLauncher
             _editClipboardButton = new Button
             {
                 Text = "Edit",
-                Location = new Point(160, 290),
+                Location = new Point(160, 285),
                 Size = new Size(100, 30),
                 Anchor = AnchorStyles.Bottom | AnchorStyles.Left
             };
@@ -187,7 +187,7 @@ namespace QuickLauncher
             _removeClipboardButton = new Button
             {
                 Text = "Remove",
-                Location = new Point(270, 290),
+                Location = new Point(270, 285),
                 Size = new Size(100, 30),
                 Anchor = AnchorStyles.Bottom | AnchorStyles.Left
             };
